@@ -1,0 +1,9 @@
+{
+  "_comment": "OPTIONAL. Higgsfield gives Claude AI image + video generation (SOUL actors, Nano Banana, video). Rename this file to .mcp.json to enable, OR connect Higgsfield from your Claude connector settings. Higgsfield is a hosted connector you authorize with your own account — no key is stored in this repo. If your Higgsfield connection uses a different URL/transport, update it here.",
+  "mcpServers": {
+    "higgsfield": {
+      "type": "http",
+      "url": "https://mcp.higgsfield.ai"
+    }
+  }
+}

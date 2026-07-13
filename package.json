@@ -1,0 +1,9 @@
+{
+  "name": "brand-machine",
+  "version": "0.1.0",
+  "description": "Personal social media brand engine: brand identity, visual identity, content pipeline, and results dashboard. Claude Code is the AI engine; this app is the dashboard over the workspace files.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

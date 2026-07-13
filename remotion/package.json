@@ -1,0 +1,19 @@
+{
+  "name": "brand-machine-reels",
+  "version": "1.0.0",
+  "description": "Reusable 9:16 reel template (Remotion) for the Brand Machine kit",
+  "scripts": {
+    "dev": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts ReelTemplate out/reel.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.481",
+    "remotion": "^4.0.481",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "typescript": "^5.4.5"
+  }
+}
