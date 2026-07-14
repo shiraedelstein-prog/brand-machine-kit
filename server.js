@@ -6,6 +6,7 @@ const http = require('http');
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
+const { computeSignals, writeSignals } = require('./signals');
 
 const PORT = process.env.PORT || 5177;
 const ROOT = __dirname;
@@ -209,7 +210,13 @@ const server = http.createServer(async (req, res) => {
             assets,
             content: await listContent(slug),
             metrics: await readJsonFile(path.join(brandDir, 'metrics.json'), []),
+            signals: await computeSignals(WORKSPACES, slug),
           });
+        }
+
+        // GET /api/brands/:slug/signals — what the logged results actually say.
+        if (req.method === 'GET' && parts[3] === 'signals' && parts.length === 4) {
+          return send(res, 200, await computeSignals(WORKSPACES, slug));
         }
 
         // GET /api/brands/:slug/docs/:doc
@@ -243,7 +250,8 @@ const server = http.createServer(async (req, res) => {
           const metrics = await readJsonFile(file, []);
           metrics.push(entry);
           await fsp.writeFile(file, JSON.stringify(metrics, null, 2));
-          return send(res, 200, { ok: true, count: metrics.length });
+          const signals = await writeSignals(WORKSPACES, slug);
+          return send(res, 200, { ok: true, count: metrics.length, signals });
         }
 
         // POST /api/brands/:slug/metrics/csv  (raw CSV text body)
@@ -254,7 +262,8 @@ const server = http.createServer(async (req, res) => {
           const metrics = await readJsonFile(file, []);
           metrics.push(...rows);
           await fsp.writeFile(file, JSON.stringify(metrics, null, 2));
-          return send(res, 200, { ok: true, imported: rows.length, count: metrics.length });
+          const signals = await writeSignals(WORKSPACES, slug);
+          return send(res, 200, { ok: true, imported: rows.length, count: metrics.length, signals });
         }
       }
       return send(res, 404, { error: 'unknown api route' });
