@@ -1,5 +1,7 @@
 # Brand Machine Kit
 
+> **New here, or not technical? Read [START-HERE.md](START-HERE.md).** It walks you through setup and your first brand in plain English, with no commands to type. The rest of this README is the technical version.
+
 An AI-run social-media brand engine. Point **Claude Code** at this folder and it interviews you, builds your brand identity + visual identity, researches your niche, plans a month of content, writes the posts, and renders the visuals — all viewable in a local dashboard.
 
 This is the reusable "engine." One person can run a whole brand from a blank folder.
