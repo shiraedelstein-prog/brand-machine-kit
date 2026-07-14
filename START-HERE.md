@@ -90,6 +90,16 @@ And in Claude Code you can ask for anything else in plain English — for exampl
 
 ---
 
+## Want AI images and video? (optional)
+
+Out of the box you get all the writing, designed image cards, and branded reels. You do **not** get AI-generated photos or video — no product shots, no UGC-style actor holding your product.
+
+Those are possible. They run on a service called Higgsfield, which needs its own account and a one-time connection to Claude. It's a setup step, not something you turn on with a sentence, so don't attempt it while you're still getting started — get your first brand built, then ask whoever gave you this kit to connect it with you. It takes about ten minutes together.
+
+(If you're technical, the setup is documented in `README.md`.)
+
+---
+
 ## If something breaks
 
 Tell Claude what happened, in your own words. "The dashboard link isn't loading" or "it says node isn't recognized" is enough — it will diagnose and fix it. You are not expected to solve technical problems yourself.
