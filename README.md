@@ -65,6 +65,12 @@ Once connected, Claude Code can generate images/video into a brand's `assets/` f
 
 ---
 
+## Deploy to a live URL (optional)
+
+This repo includes `render.yaml`. On [Render](https://render.com): **New +** → **Blueprint** → pick this repo → **Apply**. The free tier is fine for viewing; for saved edits + always-on, switch to the Starter plan + disk (see the comments in `render.yaml`).
+
+A demo brand (**Lumen Candles**) is included so the dashboard isn't empty on first run — delete `workspaces/example-brand/` when you start your own.
+
 ## Notes
 
 - **One brand per client.** Don't ship a client's `workspaces/<brand>/` folder to anyone else — it's their data.

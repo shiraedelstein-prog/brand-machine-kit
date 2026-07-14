@@ -1,0 +1,20 @@
+# One-click deploy to a live URL.
+# On Render: New + -> Blueprint -> pick this repo -> Apply.
+# Free tier: the site works but resets UI edits when it sleeps.
+# For saved edits + always-on, set plan to "starter" and uncomment the disk block below.
+services:
+  - type: web
+    name: brand-machine
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    # --- Persistent version (edits saved). Requires a paid instance (~$7/mo): ---
+    # plan: starter
+    # envVars:
+    #   - key: WORKSPACES
+    #     value: /data/workspaces
+    # disk:
+    #   name: brand-data
+    #   mountPath: /data
+    #   sizeGB: 1
