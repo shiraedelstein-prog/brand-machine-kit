@@ -17,6 +17,7 @@ workspaces/<slug>/
   content/<id>.json        one file per content piece (step 6)
   assets/                  generated images/videos referenced by content items
   metrics.json             array of result entries (user-entered via dashboard)
+  signals.json             COMPUTED by the server from metrics + content — never hand-write it
 ```
 
 ### content/<id>.json schema
@@ -82,7 +83,7 @@ Decide the best channels **for this niche** (research if needed; WebSearch is av
 Use WebSearch (and browser tools if useful) to find what's currently working in the niche on the chosen channels. For each finding: what the post/format is, the numbers if visible, **why it works** (hook mechanics, emotion, structure), and **how we'd adapt it** for this brand. End with a "Patterns" section (recurring hooks, formats, angles) and a ranked "Opportunities" list. Date-stamp the doc — it goes stale; re-run on request.
 
 ### 5. Content plan → `content-plan.md`
-Series beat random topics: recurring formats build a binge loop (someone finds post 17, scrolls back through the series) and make output predictable. Read the four docs above first, then write:
+Series beat random topics: recurring formats build a binge loop (someone finds post 17, scrolls back through the series) and make output predictable. Read the four docs above first, **then read `signals.json` (see "Closing the loop" below) and let real results override the plan's assumptions.** Then write:
 - **Series architecture** — 2–3 recurring series, each with a name, format, and a JOB: one for **credibility** (depth/expertise), one for **shareability** (saves/shares/screenshot bait), one for **conversion** (link-in-bio, DM keyword, code). Two strong series beat three weak ones. Every piece of content belongs to a series — no orphan posts.
 - **30-day calendar** — table with real dates: date, series, channel, hook angle, format, job.
 - **Binge loop** — how the series connect and what the month builds toward by day 30.
@@ -90,12 +91,28 @@ Series beat random topics: recurring formats build a binge loop (someone finds p
 - **CTA distribution** across the month: ~50% save/share, ~25% comment/DM keyword, ~15% link in bio, ~10% no CTA.
 
 ### 6. Content batch → `content/*.json` (+ `assets/`)
-Read ALL five docs first — context compounding is what makes output specific instead of generic. Two phases, like a creative director:
+Read ALL five docs first, **plus `signals.json`** — context compounding is what makes output specific instead of generic. Two phases, like a creative director:
 1. **Plan checkpoint:** propose the batch (titles, hooks, angles, which series/calendar slots they fill) and get the user's approval BEFORE generating any visuals. Redirecting strategy is cheap; rebuilding finished assets isn't.
 2. **Build:** write each piece as a JSON file — copy in brand voice ready to paste, `series` + `job` from the plan, `sourceInsight` tracing to a research finding. New pieces start as `draft` (`idea` for concept-only). Media via Higgsfield MCP into `assets/` (referenced in the item's `assets` array), following the visual identity's signature element, text caps, and anti-style list — if an image comes back generic, regenerate with the anti-style named explicitly. Confirm before spending credits on video. Vary caption length; respect the plan's CTA distribution.
 
-### 7. Results
-The user logs metrics in the dashboard. When asked to analyze results: read `metrics.json` + `content/`, identify what's over/under-performing and why (hook? format? channel? topic?), and feed conclusions back into the next research/content batch.
+### 7. Results → `metrics.json` (user-entered) → `signals.json` (computed)
+The user logs each post's numbers in the dashboard's Results tab. The server then recomputes `signals.json` automatically — it joins every logged result back to that post's `series`, `format`, `channel`, and `job`, and works out what actually performs against the brand's own baseline. You never compute this by hand, and you never estimate it.
+
+## Closing the loop — `signals.json` is not optional
+
+**Steps 5 and 6 MUST read `signals.json` before writing anything.** This is what makes the kit a loop rather than a content generator: the next round is built on what this brand's audience actually did, not on what generally works.
+
+How to use it:
+
+- **`ready: false`** — there are fewer measured posts than `minSample`. There are **no findings**. Say so plainly, plan from the strategy docs alone, and do not let the numbers steer anything. Do not soften this into "early signs suggest…".
+- **`ready: true`** — use `actionable[]`. Each entry names a `dimension` (series / format / channel / job), its `value`, a `verdict` of `over` or `under`, and the `index` (how it performed against the brand's baseline, so 2.1 = double).
+  - `over` → give it more slots in the next batch. Say which one and why.
+  - `under` → fix it or cut it. Name the change.
+  - Anything marked `insufficient` is **not** a finding. Never cite it as one.
+- **`unloggedPosted[]`** — posted content with no numbers logged. The loop is blind to these. Tell the user to log them.
+- Always state the sample you are reasoning from ("across 11 measured posts…"). Never dress up a thin sample as a trend.
+
+When the user asks why something changed in the plan, point at the specific signal that caused it.
 
 ## Using the brand docs as a decision filter
 

@@ -392,6 +392,8 @@ function renderResults(root, b) {
     root.appendChild(el(`<p class="note" style="margin:12px 2px 0">🏆 Best performer: <strong>${esc(titleOf(best[0]))}</strong> — ${fmt(best[1].views)} views, ${fmt(best[1].eng)} engagements</p>`));
   }
 
+  root.appendChild(signalsCard(b.signals));
+
   if (m.length) {
     root.appendChild(lineChartCard(m));
     root.appendChild(barChartCard(byContent, titleOf));
@@ -400,6 +402,57 @@ function renderResults(root, b) {
     root.appendChild(el('<p class="empty">No metrics yet — add your first entry below after posting.</p>'));
   }
   root.appendChild(entryFormCard(b));
+}
+
+/* ---------- signals: what the numbers actually say ----------
+   This is the panel that closes the loop. Steps 5 and 6 of the pipeline read the
+   same signals.json this renders, so what you see here is literally what Claude
+   is required to plan the next batch against. */
+const DIM_LABEL = { series: 'Series', format: 'Format', channel: 'Channel', job: 'Job' };
+
+function signalsCard(s) {
+  if (!s) return el('<div></div>');
+
+  // Below the sample floor there are no findings, and the panel says so rather than
+  // dressing up 2 posts as a trend.
+  if (!s.ready) {
+    return el(`<div class="card signals">
+      <div class="card-head">
+        <h3>Signals</h3>
+        <span class="pill pill-muted">${s.measuredPosts}/${s.minSample} posts measured</span>
+      </div>
+      <p class="note">${esc(s.readyNote)}</p>
+      ${unloggedNote(s)}
+    </div>`);
+  }
+
+  const rows = s.actionable.map((a) => `
+    <li class="signal ${a.verdict}">
+      <span class="signal-verdict">${a.verdict === 'over' ? 'Do more' : 'Fix or cut'}</span>
+      <span class="signal-what"><b>${esc(a.value)}</b> <span class="dim">${DIM_LABEL[a.dimension] || a.dimension}</span></span>
+      <span class="signal-index">${a.index}x baseline</span>
+      <span class="signal-n">n=${a.n}</span>
+    </li>`).join('');
+
+  return el(`<div class="card signals">
+    <div class="card-head">
+      <h3>Signals</h3>
+      <span class="pill">${s.measuredPosts} posts measured</span>
+    </div>
+    <p class="note">${esc(s.readyNote)}</p>
+    ${s.actionable.length
+      ? `<ul class="signal-list">${rows}</ul>
+         <p class="hint">Claude reads this before writing the next batch. Ask it to “rebuild the content plan from the signals”.</p>`
+      : '<p class="note">Nothing is clearly over or under performing yet. Everything is within normal range of your baseline.</p>'}
+    ${unloggedNote(s)}
+  </div>`);
+}
+
+function unloggedNote(s) {
+  if (!s.unloggedPosted || !s.unloggedPosted.length) return '';
+  const names = s.unloggedPosted.slice(0, 3).map((u) => esc(u.title)).join(', ');
+  const more = s.unloggedPosted.length > 3 ? ` and ${s.unloggedPosted.length - 3} more` : '';
+  return `<p class="hint">${s.unloggedPosted.length} posted item${s.unloggedPosted.length > 1 ? 's have' : ' has'} no results logged (${names}${more}). The loop is blind to ${s.unloggedPosted.length > 1 ? 'them' : 'it'} until you add the numbers below.</p>`;
 }
 
 /* views-over-time line chart, one series per channel */
