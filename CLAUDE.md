@@ -2,7 +2,7 @@
 
 This project is a **personal social media brand engine**. The web app (`server.js` + `public/`) is a read/write dashboard over `workspaces/`. **Claude Code is the AI engine**: when the user asks to run a pipeline step, follow the recipes below and write files in the exact formats the dashboard reads.
 
-Start the dashboard with `node server.js` → http://localhost:5177
+Start the dashboard with `node server.js` → http://localhost:5178
 
 ## Workspace file contract
 
@@ -15,6 +15,7 @@ workspaces/<slug>/
   research/viral-research.md   step 4 output (re-run periodically)
   content-plan.md          step 5 output — series architecture + 30-day calendar
   content/<id>.json        one file per content piece (step 6)
+  campaigns/<id>.json      one file per campaign (step 8) — goal, offer, dates, results
   assets/                  generated images/videos referenced by content items
   metrics.json             array of result entries (user-entered via dashboard)
   signals.json             COMPUTED by the server from metrics + content — never hand-write it
@@ -36,6 +37,7 @@ workspaces/<slug>/
   "script": "Full video script if format is video (optional)",
   "series": "Which recurring series from content-plan.md this belongs to",
   "job": "credibility | shareability | conversion",
+  "campaign": "campaign id if this piece belongs to a campaign burst (optional)",
   "assets": ["assets/filename.png"],
   "sourceInsight": "Which viral-research finding inspired this",
   "createdAt": "ISO date",
@@ -48,6 +50,26 @@ workspaces/<slug>/
 ### metrics.json entry schema
 
 `{ date, channel, contentId, views, likes, comments, shares, saves, clicks, followersGained, notes }` — usually entered by the user in the dashboard Results tab (manual form or CSV import). Only write this file directly if the user asks you to log results.
+
+### campaigns/<id>.json schema
+
+```json
+{
+  "id": "kebab-case-unique-id",
+  "name": "Father's Day 2026",
+  "goal": "What business outcome this push is for, in the owner's words",
+  "offer": "25% off the SPF spray",
+  "code": "DAD25",
+  "redemption": "how a sale gets attributed: discount code | booking link | 'found us on social' | DM keyword",
+  "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD",
+  "status": "planned | running | ended",
+  "angle": "The one creative idea the burst hangs on",
+  "results": [],
+  "createdAt": "ISO date"
+}
+```
+
+`results` entries (`{ date, redemptions, revenue, cost, notes }`) are entered by the user in the dashboard Campaigns tab. Never invent or estimate them.
 
 ## Pipeline steps (what to do when the user asks)
 
@@ -97,6 +119,18 @@ Read ALL five docs first, **plus `signals.json`** — context compounding is wha
 
 ### 7. Results → `metrics.json` (user-entered) → `signals.json` (computed)
 The user logs each post's numbers in the dashboard's Results tab. The server then recomputes `signals.json` automatically — it joins every logged result back to that post's `series`, `format`, `channel`, and `job`, and works out what actually performs against the brand's own baseline. You never compute this by hand, and you never estimate it.
+
+### 8. Campaign → `campaigns/<id>.json` + tagged content burst
+
+A campaign is a short push with a goal, an offer, and a deadline — a holiday sale, a product launch, a slow-month push. It is NOT the standing content plan: it borrows the brand's voice and visuals but exists to move a number in a window of time. Run it any time after step 1 exists (the more docs exist, the better the output).
+
+**Interview (ONE message, five questions):** the occasion or goal; the offer (discount, freebie, bundle — push back if there's no real offer, "check us out" doesn't convert); the deadline/window; the product or service being pushed; how a sale will be attributed (discount code, booking link, "how did you hear about us?", DM keyword). If they sell in person with no codes, default to the "found us on social" count — never leave attribution undefined.
+
+**Then write:**
+1. `campaigns/<id>.json` per the schema above, `status: "planned"`, `results: []`.
+2. The content burst as normal `content/*.json` pieces, each with `"campaign": "<id>"`. Default shape for a 2-week window (scale to the window): 2 teasers → 3–4 offer posts (different hooks, same offer) → 1–2 proof/demo posts → 1 last-day urgency post. **Every piece must carry the campaign's code or link in its body or CTA** — attribution dies the moment a post forgets the code. Follow brand voice, visual identity, and the campaign's `angle`; plan checkpoint before generating visuals, same as step 6.
+
+**Analysis (when the user asks, or when the campaign ends):** read the campaign's `results` plus `metrics.json` entries for the tagged pieces. Report: total redemptions/revenue/cost against the goal; which piece drove redemptions (by post dates vs. result dates and per-post engagement); what to repeat or drop next campaign. Write the takeaways into the next campaign's `angle` when you run one. If `results` is empty, say the scoreboard is blind and point the user to the Campaigns tab — do not analyze engagement as if it were sales.
 
 ## Closing the loop — `signals.json` is not optional
 

@@ -22,7 +22,7 @@ This is the reusable "engine." One person can run a whole brand from a blank fol
 ```
 node server.js
 ```
-Open **http://localhost:5177**. This is where everything you build appears (strategy docs, content board, results).
+Open **http://localhost:5178**. This is where everything you build appears (strategy docs, content board, campaigns, results).
 
 ## 2. Run the pipeline with Claude Code
 
@@ -36,6 +36,10 @@ Open this folder in Claude Code and just talk to it. It follows the recipe in **
 6. `Write the content batch` → real posts (hook, body, CTA), graded before you see them.
 
 Everything appears in the dashboard as you go. Move posts idea → draft → ready → posted, and log results in the Results tab.
+
+**Campaigns** — for a time-boxed push (holiday sale, launch, slow month):
+
+7. `Run a campaign for <your brand>` → Claude asks for the goal, offer, discount code, and dates, then generates a tagged content burst where every post carries the code. Log redemptions/revenue in the **Campaigns** tab and the dashboard shows the money scoreboard (redemptions, revenue, cost, return). When it ends: `Analyze the campaign` — the takeaways feed the next one.
 
 Each brand is just a folder under `workspaces/<brand>/` — plain text/JSON you can read and edit.
 

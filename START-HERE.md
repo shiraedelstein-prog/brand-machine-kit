@@ -34,7 +34,7 @@ Then type this to Claude, exactly as written:
 
 > Start the dashboard.
 
-Claude will start it and give you a link — **http://localhost:5177**. Click it. That's your dashboard: everything you build shows up there.
+Claude will start it and give you a link — **http://localhost:5178**. Click it. That's your dashboard: everything you build shows up there.
 
 Leave Claude Code open the whole time you're working. If you close it, the dashboard stops. Just say "Start the dashboard" again to bring it back.
 
@@ -79,6 +79,12 @@ In the dashboard you can:
 - Read your strategy documents.
 - Drag posts through **idea → draft → ready → posted** on the content board.
 - Type in how each post performed (views, likes, comments) in the **Results** tab.
+
+And when you have something to sell *right now* — a holiday, a sale, a launch, a slow month — say:
+
+> Run a campaign for my brand.
+
+Claude asks five quick questions (goal, offer, discount code, dates, how you'll count sales) and writes a burst of posts that all push the same offer. As orders come in, type the numbers into the **Campaigns** tab — it shows you exactly what the campaign made versus what it cost. That's the tab that answers "is this actually working?"
 
 And in Claude Code you can ask for anything else in plain English — for example:
 

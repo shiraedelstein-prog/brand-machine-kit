@@ -164,7 +164,7 @@ async function renderHome() {
 const TABS = [
   ['overview', 'Overview'], ['identity', 'Brand identity'], ['visual', 'Visual identity'],
   ['channels', 'Channels'], ['research', 'Viral research'], ['plan', 'Content plan'],
-  ['content', 'Content'], ['results', 'Results'],
+  ['content', 'Content'], ['campaigns', 'Campaigns'], ['results', 'Results'],
 ];
 const TAB_DOC = { identity: 'brand-identity', visual: 'visual-identity', channels: 'channel-strategy', research: 'viral-research', plan: 'content-plan' };
 
@@ -195,6 +195,7 @@ async function renderBrand(slug, tab) {
   if (tab === 'overview') renderOverview(body, b);
   else if (TAB_DOC[tab]) renderDoc(body, b, TAB_DOC[tab], tab);
   else if (tab === 'content') renderContent(body, b);
+  else if (tab === 'campaigns') renderCampaigns(body, b);
   else if (tab === 'results') renderResults(body, b);
 }
 
@@ -284,6 +285,7 @@ function renderContent(root, b) {
           <span class="chan-tag"><span class="dot-s" style="background:${chanColor(item.channel)}"></span>${esc(chanLabel(item.channel))}</span>
           <span>${esc(item.format || '')}</span>
           ${item.series ? `<span>📚 ${esc(item.series)}</span>` : ''}
+          ${item.campaign ? `<span>🎯 ${esc(item.campaign)}</span>` : ''}
           ${item.assets && item.assets.length ? `<span>🖼 ${item.assets.length}</span>` : ''}
         </div>
         ${item.hook ? `<div class="hook">“${esc(item.hook.length > 90 ? item.hook.slice(0, 90) + '…' : item.hook)}”</div>` : ''}
@@ -308,6 +310,7 @@ function openContentModal(b, item) {
     ['Hook', item.hook], ['Body / caption', item.body], ['CTA', item.cta],
     ['Hashtags', (item.hashtags || []).join(' ')], ['Script', item.script],
     ['Series / job', [item.series, item.job].filter(Boolean).join(' — ')],
+    ['Campaign', item.campaign],
     ['Source insight', item.sourceInsight],
   ];
   const modal = el(`<div class="modal">
@@ -360,6 +363,118 @@ function openContentModal(b, item) {
 
   overlay.appendChild(modal);
   modalRoot.appendChild(overlay);
+}
+
+/* ---------- campaigns: bursts with a goal, an offer, and a money scoreboard ---------- */
+const CAMPAIGN_STATUSES = ['planned', 'running', 'ended'];
+function money(n) {
+  n = Number(n) || 0;
+  return '$' + (Number.isInteger(n) ? n.toLocaleString() : n.toFixed(2));
+}
+
+function renderCampaigns(root, b) {
+  if (!b.campaigns || !b.campaigns.length) {
+    root.appendChild(el(`<div class="doc-missing">
+      <p>No campaigns yet.</p>
+      <p>A campaign is a short push with a goal, an offer, and a deadline — a holiday sale, a launch, a slow-month push.</p>
+      <p>Tell Claude Code: <code>Run a campaign for ${esc(b.name)}</code>. It interviews you (goal, offer, code, dates), writes
+      <code>workspaces/${b.slug}/campaigns/&lt;id&gt;.json</code>, and generates the content burst — every piece carrying the same
+      discount code or link so sales are countable here.</p>
+    </div>`));
+    return;
+  }
+  for (const c of b.campaigns) root.appendChild(campaignCard(b, c));
+}
+
+function campaignCard(b, c) {
+  const results = c.results || [];
+  const redemptions = results.reduce((a, r) => a + (Number(r.redemptions) || 0), 0);
+  const revenue = results.reduce((a, r) => a + (Number(r.revenue) || 0), 0);
+  const cost = results.reduce((a, r) => a + (Number(r.cost) || 0), 0);
+  const ret = cost > 0 ? (revenue / cost) : null;
+  const pieces = b.content.filter((i) => i.campaign === c.id);
+  const counts = countByStatusFront(pieces);
+
+  const card = el(`<div class="card" style="margin-bottom:20px">
+    <div class="card-head" style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+      <h3 style="margin:0">${esc(c.name || c.id)}</h3>
+      <span class="pill ${c.status === 'running' ? 'on' : ''}">${esc(c.status || 'planned')}</span>
+      <span class="note" style="margin:0">${esc(c.startDate || '?')} → ${esc(c.endDate || '?')}</span>
+    </div>
+    ${c.goal ? `<p class="note" style="margin:8px 0 0">🎯 ${esc(c.goal)}</p>` : ''}
+    <p class="note" style="margin:6px 0 14px">
+      ${c.offer ? `Offer: <strong>${esc(c.offer)}</strong>` : ''}
+      ${c.code ? ` · Code: <code>${esc(c.code)}</code> <button class="copy-btn" data-copy="${esc(c.code)}">copy</button>` : ''}
+      ${c.redemption ? ` · Counted by: ${esc(c.redemption)}` : ''}
+    </p>
+    <div class="grid cols-4">
+      <div class="card stat-tile"><div class="label">Redemptions</div><div class="value">${fmt(redemptions)}</div></div>
+      <div class="card stat-tile"><div class="label">Revenue</div><div class="value">${money(revenue)}</div></div>
+      <div class="card stat-tile"><div class="label">Cost</div><div class="value">${money(cost)}</div></div>
+      <div class="card stat-tile"><div class="label">Return</div><div class="value">${ret === null ? '—' : ret.toFixed(1) + 'x'}</div></div>
+    </div>
+    <p class="note" style="margin:10px 0 0">${pieces.length
+      ? `${pieces.length} content piece${pieces.length > 1 ? 's' : ''}: ${counts.idea} ideas · ${counts.draft} drafts · ${counts.ready} ready · ${counts.posted} posted — see the 🎯 tags on the Content board.`
+      : 'No content tagged with this campaign yet.'}</p>
+    ${results.length ? `<div style="overflow-x:auto;margin-top:12px"><table class="data">
+      <thead><tr><th>Date</th><th class="num">Redemptions</th><th class="num">Revenue</th><th class="num">Cost</th><th>Notes</th></tr></thead>
+      <tbody>${[...results].sort((a, z) => (z.date || '').localeCompare(a.date || '')).map((r) => `<tr>
+        <td>${esc(r.date || '')}</td><td class="num">${fmt(r.redemptions)}</td>
+        <td class="num">${money(r.revenue)}</td><td class="num">${money(r.cost)}</td>
+        <td>${esc(r.notes || '')}</td></tr>`).join('')}</tbody>
+    </table></div>` : ''}
+    <div class="form-row" style="margin-top:14px">
+      <input type="date" class="cr-date" value="${new Date().toISOString().slice(0, 10)}" />
+      <input type="number" class="cr-redemptions" placeholder="Redemptions / bookings" min="0" />
+      <input type="number" class="cr-revenue" placeholder="Revenue ($)" min="0" step="0.01" />
+      <input type="number" class="cr-cost" placeholder="Cost ($)" min="0" step="0.01" />
+      <input type="text" class="cr-notes" placeholder="Notes (optional)" />
+    </div>
+    <div class="form-row" style="align-items:center">
+      <button class="btn primary cr-add" style="flex:0 0 auto">Log results</button>
+      <span class="status-actions"></span>
+    </div>
+    <p class="hint" style="margin-top:8px">Count only sales you can attribute — code redemptions, or "found us on social" answers during the campaign window. When it ends, ask Claude: "Analyze the ${esc(c.name || c.id)} campaign".</p>
+  </div>`);
+
+  card.querySelectorAll('.copy-btn').forEach((btn) => {
+    btn.onclick = () => copyText(btn.dataset.copy, 'Code');
+  });
+  card.querySelector('.cr-add').onclick = async () => {
+    const q = (sel) => card.querySelector(sel).value;
+    const entry = {
+      date: q('.cr-date'), redemptions: Number(q('.cr-redemptions')) || 0,
+      revenue: Number(q('.cr-revenue')) || 0, cost: Number(q('.cr-cost')) || 0,
+      notes: q('.cr-notes').trim(),
+    };
+    if (!entry.date) return toast('Date required');
+    try {
+      await api(`/brands/${b.slug}/campaigns/${c.id}/results`, { method: 'POST', body: JSON.stringify(entry) });
+      toast('Results logged');
+      route();
+    } catch (e) { toast(e.message); }
+  };
+
+  const actions = card.querySelector('.status-actions');
+  const si = CAMPAIGN_STATUSES.indexOf(c.status || 'planned');
+  if (si >= 0 && si < CAMPAIGN_STATUSES.length - 1) {
+    const next = CAMPAIGN_STATUSES[si + 1];
+    const btn = el(`<button class="btn" style="flex:0 0 auto">Mark ${next}</button>`);
+    btn.onclick = async () => {
+      try {
+        await api(`/brands/${b.slug}/campaigns/${c.id}`, { method: 'PATCH', body: JSON.stringify({ status: next }) });
+        route();
+      } catch (e) { toast(e.message); }
+    };
+    actions.appendChild(btn);
+  }
+  return card;
+}
+
+function countByStatusFront(items) {
+  const c = { idea: 0, draft: 0, ready: 0, posted: 0 };
+  for (const i of items) if (c[i.status] !== undefined) c[i.status]++;
+  return c;
 }
 
 /* ---------- results ---------- */

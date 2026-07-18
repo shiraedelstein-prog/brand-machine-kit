@@ -1,0 +1,17 @@
+{
+  "id": "fathers-day-demo",
+  "name": "Father's Day push (DEMO)",
+  "goal": "SAMPLE — 20 extra orders of the Cedar & Smoke candle before Father's Day",
+  "offer": "20% off Cedar & Smoke",
+  "code": "DAD20",
+  "redemption": "discount code at checkout",
+  "startDate": "2026-06-07",
+  "endDate": "2026-06-21",
+  "status": "ended",
+  "angle": "The candle for dads who say they don't want anything. Deadpan gift-guide energy, zero mush.",
+  "results": [
+    { "date": "2026-06-14", "redemptions": 6, "revenue": 174, "cost": 25, "notes": "SAMPLE data — first week, offer post did the work" },
+    { "date": "2026-06-21", "redemptions": 9, "revenue": 261, "cost": 15, "notes": "SAMPLE data — last-day urgency post drove 5 of these" }
+  ],
+  "createdAt": "2026-06-06T00:00:00.000Z"
+}

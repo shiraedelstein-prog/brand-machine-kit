@@ -8,7 +8,7 @@ const fsp = require('fs/promises');
 const path = require('path');
 const { computeSignals, writeSignals } = require('./signals');
 
-const PORT = process.env.PORT || 5177;
+const PORT = process.env.PORT || 5178;
 const ROOT = __dirname;
 const SEED_WORKSPACES = path.join(ROOT, 'workspaces');
 // In production (e.g. Render) point WORKSPACES at a persistent disk so edits survive restarts.
@@ -114,6 +114,23 @@ function countByStatus(content) {
   return c;
 }
 
+async function listCampaigns(slug) {
+  const dir = path.join(WORKSPACES, slug, 'campaigns');
+  let files = [];
+  try {
+    files = (await fsp.readdir(dir)).filter((f) => f.endsWith('.json'));
+  } catch {
+    return [];
+  }
+  const items = [];
+  for (const f of files) {
+    const item = await readJsonFile(path.join(dir, f), null);
+    if (item) items.push(item);
+  }
+  items.sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''));
+  return items;
+}
+
 async function listContent(slug) {
   const dir = path.join(WORKSPACES, slug, 'content');
   let files = [];
@@ -184,6 +201,7 @@ const server = http.createServer(async (req, res) => {
         await fsp.mkdir(path.join(dir, 'content'), { recursive: true });
         await fsp.mkdir(path.join(dir, 'assets'), { recursive: true });
         await fsp.mkdir(path.join(dir, 'research'), { recursive: true });
+        await fsp.mkdir(path.join(dir, 'campaigns'), { recursive: true });
         const brand = { name, slug, niche: body.niche || '', createdAt: new Date().toISOString() };
         await fsp.writeFile(path.join(dir, 'brand.json'), JSON.stringify(brand, null, 2));
         await fsp.writeFile(path.join(dir, 'metrics.json'), '[]');
@@ -209,6 +227,7 @@ const server = http.createServer(async (req, res) => {
             docs,
             assets,
             content: await listContent(slug),
+            campaigns: await listCampaigns(slug),
             metrics: await readJsonFile(path.join(brandDir, 'metrics.json'), []),
             signals: await computeSignals(WORKSPACES, slug),
           });
@@ -240,6 +259,36 @@ const server = http.createServer(async (req, res) => {
           if (patch.status === 'posted' && !updated.postedAt) updated.postedAt = new Date().toISOString();
           await fsp.writeFile(file, JSON.stringify(updated, null, 2));
           return send(res, 200, updated);
+        }
+
+        // PATCH /api/brands/:slug/campaigns/:id  (merge fields, e.g. status change)
+        if (req.method === 'PATCH' && parts[3] === 'campaigns' && parts[4] && parts.length === 5) {
+          const id = parts[4].replace(/[^a-zA-Z0-9_-]/g, '');
+          const file = path.join(brandDir, 'campaigns', id + '.json');
+          const item = await readJsonFile(file, null);
+          if (!item) return send(res, 404, { error: 'not found' });
+          const patch = JSON.parse(await readBody(req) || '{}');
+          const updated = { ...item, ...patch, id: item.id, results: item.results || [] };
+          if (Array.isArray(patch.results)) updated.results = patch.results;
+          await fsp.writeFile(file, JSON.stringify(updated, null, 2));
+          return send(res, 200, updated);
+        }
+
+        // POST /api/brands/:slug/campaigns/:id/results  (append one result entry)
+        if (req.method === 'POST' && parts[3] === 'campaigns' && parts[4] && parts[5] === 'results') {
+          const id = parts[4].replace(/[^a-zA-Z0-9_-]/g, '');
+          const file = path.join(brandDir, 'campaigns', id + '.json');
+          const item = await readJsonFile(file, null);
+          if (!item) return send(res, 404, { error: 'not found' });
+          const entry = JSON.parse(await readBody(req) || '{}');
+          if (!entry.date) return send(res, 400, { error: 'date required' });
+          entry.redemptions = Number(entry.redemptions) || 0;
+          entry.revenue = Number(entry.revenue) || 0;
+          entry.cost = Number(entry.cost) || 0;
+          item.results = item.results || [];
+          item.results.push(entry);
+          await fsp.writeFile(file, JSON.stringify(item, null, 2));
+          return send(res, 200, item);
         }
 
         // POST /api/brands/:slug/metrics  (single JSON entry)
